@@ -153,6 +153,8 @@ static int RangeTableOffsetCompat(PlannerInfo *root, AppendRelInfo *appendRelInf
 static Relids QueryRteIdentities(Query *queryTree);
 static bool ContextCoversJoinRestriction(JoinRestrictionContext *joinRestrictionContext,
 										 JoinRestriction *joinRestrictionInTest);
+static bool JoinRelIdsSame(JoinRestriction *leftRestriction,
+						   JoinRestriction *rightRestriction);
 
 
 /*
@@ -2087,6 +2089,15 @@ ContextCoversJoinRestriction(JoinRestrictionContext *joinRestrictionContext,
 			continue;
 		}
 
+		if (!JoinRelIdsSame(joinRestrictionInTest, joinRestrictionInContext))
+		{
+			/*
+			 * We should not eliminate the restrictions belonging to different
+			 * relations.
+			 */
+			continue;
+		}
+
 		/*
 		 * We check whether the restrictions in joinRestrictionInTest is a subset
 		 * of the restrictions in joinRestrictionInContext in the sense that all the
@@ -2101,4 +2112,29 @@ ContextCoversJoinRestriction(JoinRestrictionContext *joinRestrictionContext,
 	}
 
 	return false;
+}
+
+
+/*
+ * JoinRelIdsSame returns true if the innerrel and outerrel of the input restrictions
+ * are equal.
+ */
+static bool
+JoinRelIdsSame(JoinRestriction *leftRestriction, JoinRestriction *rightRestriction)
+{
+	Relids leftInnerRelIds = leftRestriction->innerrel->relids;
+	Relids rightInnerRelIds = rightRestriction->innerrel->relids;
+	if (!bms_equal(leftInnerRelIds, rightInnerRelIds))
+	{
+		return false;
+	}
+
+	Relids leftOuterRelIds = leftRestriction->outerrel->relids;
+	Relids rightOuterRelIds = rightRestriction->outerrel->relids;
+	if (!bms_equal(leftOuterRelIds, rightOuterRelIds))
+	{
+		return false;
+	}
+
+	return true;
 }
