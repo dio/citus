@@ -672,6 +672,20 @@ SetLocalMultiShardModifyModeToSequential()
 
 
 /*
+ * SetLocalMultiShardModifyModeToSequential is simply a C interface for setting
+ * the following:
+ *      SET LOCAL geqo = false;
+ */
+void
+SetLocalGeqoToOff()
+{
+	set_config_option("geqo", "false",
+					  (superuser() ? PGC_SUSET : PGC_USERSET), PGC_S_SESSION,
+					  GUC_ACTION_LOCAL, true, 0, false);
+}
+
+
+/*
  * AlterTableConstraintCheck returns if the given query is an ALTER TABLE
  * constraint check query.
  *

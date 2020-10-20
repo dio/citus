@@ -124,7 +124,7 @@ static PlannedStmt * PlanFastPathDistributedStmt(DistributedPlanningContext *pla
 static PlannedStmt * PlanDistributedStmt(DistributedPlanningContext *planContext,
 										 int rteIdCounter);
 static RTEListProperties * GetRTEListProperties(List *rangeTableList);
-
+#include "miscadmin.h"
 
 /* Distributed planner hook */
 PlannedStmt *
@@ -218,6 +218,12 @@ distributed_planner(Query *parse,
 		}
 		else
 		{
+			/*
+			 * TODO: add comment that we don't care geqo for now.
+			 *
+			 */
+			SetLocalGeqoToOff();
+
 			/*
 			 * Call into standard_planner because the Citus planner relies on both the
 			 * restriction information per table and parse tree transformations made by
