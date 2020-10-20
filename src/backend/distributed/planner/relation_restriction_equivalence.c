@@ -2084,6 +2084,17 @@ ContextCoversJoinRestriction(JoinRestrictionContext *joinRestrictionContext,
 			 * useful for detecting not supported outer-join checks even if it
 			 * doesn't help for colocation checks.
 			 */
+		}
+
+		if (!bms_equal(joinRestrictionInContext->innerrelRelids,
+					   joinRestrictionInTest->innerrelRelids))
+		{
+			continue;
+		}
+
+		if (!bms_equal(joinRestrictionInContext->outerrelRelids,
+					   joinRestrictionInTest->outerrelRelids))
+		{
 			continue;
 		}
 
