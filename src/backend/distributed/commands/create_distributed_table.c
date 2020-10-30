@@ -113,6 +113,7 @@ static bool ShouldLocalTableBeEmpty(Oid relationId, char distributionMethod, boo
 									viaDeprecatedAPI);
 static void EnsureCitusTableCanBeCreated(Oid relationOid);
 static void EnsureRelationExists(Oid relationId);
+static void EnsureTableNotForeign(Oid relationId);
 static bool LocalTableEmpty(Oid tableId);
 static void CopyLocalDataIntoShards(Oid relationId);
 static List * TupleDescColumnNameList(TupleDesc tupleDescriptor);
@@ -294,7 +295,7 @@ undistribute_table(PG_FUNCTION_ARGS)
 	EnsureCoordinator();
 	EnsureRelationExists(relationId);
 	EnsureTableOwner(relationId);
-
+	EnsureTableNotForeign(relationId);
 	UndistributeTable(relationId);
 
 	PG_RETURN_VOID();
@@ -335,6 +336,28 @@ EnsureRelationExists(Oid relationId)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("relation with OID %d does not exist",
 							   relationId)));
+	}
+}
+
+
+/*
+ * EnsureTableNotForeign checks if a given relation exists and is not a foreign table
+ */
+static void
+EnsureTableNotForeign(Oid relationId)
+{
+	char relationKind = get_rel_relkind(relationId);
+	if (!relationKind)
+	{
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("relation with OID %d does not exist",
+							   relationId)));
+	}
+
+	if (relationKind == RELKIND_FOREIGN_TABLE)
+	{
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("foreign relations are not supported")));
 	}
 }
 
